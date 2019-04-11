@@ -53,7 +53,7 @@ def RR_scheduling(process_list, time_quantum ):
     task = [process_list[0], process_list[0].burst_time]
     queue.append(task)
 
-    while len(queue) > 0 or completed_count < len(process_list):   # some task not yet finished
+    while completed_count < len(process_list):   # some task not yet finished
         if len(queue) == 0:  # waiting for new arrival
             next_process = filter(lambda proc:proc.arrive_time>current_time, process_list)[0]
             current_time = next_process.arrive_time
