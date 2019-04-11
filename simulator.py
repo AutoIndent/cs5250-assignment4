@@ -19,6 +19,7 @@ class Process:
         self.id = id
         self.arrive_time = arrive_time
         self.burst_time = burst_time
+        self.remaining_time = burst_time
     #for printing purpose
     def __repr__(self):
         return ('[id %d : arrival_time %d,  burst_time %d]'%(self.id, self.arrive_time, self.burst_time))
@@ -41,7 +42,53 @@ def FCFS_scheduling(process_list):
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
 def RR_scheduling(process_list, time_quantum ):
-    return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
+    schedule = []
+    current_time = 0
+    waiting_time = 0
+    completed_count = 0
+
+    # put the first process in queue
+    queue = []
+    # an task consists of process object and remaining time
+    task = [process_list[0], process_list[0].burst_time]
+    queue.append(task)
+
+    while len(queue) > 0 or completed_count < len(process_list):   # some task not yet finished
+        if len(queue) == 0:  # waiting for new arrival
+            next_process = filter(lambda proc:proc.arrive_time>current_time, process_list)[0]
+            current_time = next_process.arrive_time
+            print 'add process {} to queue scheduled for time {}'.format(next_process, current_time)
+            queue.append([next_process, next_process.burst_time])
+            continue
+
+        # pick next task
+        cur_task = queue.pop(0)
+        schedule.append((current_time, cur_task[0].id))
+        time_used = min(cur_task[1], time_quantum)
+        previous_time = current_time
+        current_time += time_used
+
+        # check new tasks arrived while task is being executed
+        # resolve tie: if task 1 finishes current cycle at the same time as task 2 arrives, task 2 enters queue FIRST
+        new_arrivals = filter(lambda proc:previous_time<proc.arrive_time<=current_time, process_list)
+        if len(new_arrivals):
+            print "between time %s and %s, new arrivals are %s" % (previous_time, current_time, new_arrivals)
+        for process in new_arrivals:
+            queue.append([process, process.burst_time])
+
+        cur_task[1] -= time_used
+
+        if cur_task[1] > 0:
+            queue.append(cur_task) # put back to end of queue
+        else:
+            waiting_time += current_time - cur_task[0].arrive_time - cur_task[0].burst_time
+            completed_count += 1
+
+    print "Completion time: {}".format(current_time)
+    avg_waiting_time = 1.0 * waiting_time / completed_count
+    print schedule, avg_waiting_time
+
+    return schedule, avg_waiting_time
 
 def SRTF_scheduling(process_list):
     return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
@@ -87,4 +134,5 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv[1:])
+
 
