@@ -57,7 +57,7 @@ def RR_scheduling(process_list, time_quantum ):
         if len(queue) == 0:  # waiting for new arrival
             next_process = filter(lambda proc:proc.arrive_time>current_time, process_list)[0]
             current_time = next_process.arrive_time
-            print 'add process {} to queue scheduled for time {}'.format(next_process, current_time)
+            # print 'add process {} to queue scheduled for time {}'.format(next_process, current_time)
             queue.append([next_process, next_process.burst_time])
             continue
 
@@ -71,8 +71,8 @@ def RR_scheduling(process_list, time_quantum ):
         # check new tasks arrived while task is being executed
         # resolve tie: if task 1 finishes current cycle at the same time as task 2 arrives, task 2 enters queue FIRST
         new_arrivals = filter(lambda proc:previous_time<proc.arrive_time<=current_time, process_list)
-        if len(new_arrivals):
-            print "between time %s and %s, new arrivals are %s" % (previous_time, current_time, new_arrivals)
+        # if len(new_arrivals):
+            # print "between time %s and %s, new arrivals are %s" % (previous_time, current_time, new_arrivals)
         for process in new_arrivals:
             queue.append([process, process.burst_time])
 
@@ -84,14 +84,55 @@ def RR_scheduling(process_list, time_quantum ):
             waiting_time += current_time - cur_task[0].arrive_time - cur_task[0].burst_time
             completed_count += 1
 
-    print "Completion time: {}".format(current_time)
+    # print "Completion time: {}".format(current_time)
     avg_waiting_time = 1.0 * waiting_time / completed_count
-    print schedule, avg_waiting_time
 
     return schedule, avg_waiting_time
 
 def SRTF_scheduling(process_list):
-    return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
+    schedule = []
+    current_time = process_list[0].arrive_time
+    complete_count = 0
+    arrival_count = 0
+    waiting_time = 0
+    queue = []
+
+    while complete_count < len(process_list):
+
+        arrivals = filter(lambda proc:proc.arrive_time==current_time, process_list)
+        for arrival in arrivals:
+            # print "added task {} @ time {}".format(arrival, current_time)
+            queue.append([arrival, arrival.burst_time])
+            arrival_count += 1
+
+        queue.sort(key=lambda task:task[1])
+        cur_task = queue[0]
+        next_arrival = process_list[arrival_count] if arrival_count < len(process_list) else None
+        # switch
+        if len(schedule) == 0 or cur_task[0].id != schedule[-1][1]:
+            schedule.append((current_time, cur_task[0].id))
+
+        if cur_task[1] == 0:   # the task has finished
+            complete_count += 1
+            waiting_time += current_time - cur_task[0].arrive_time - cur_task[0].burst_time
+            queue.pop(0)
+            print "finished task {} at time {}".format(cur_task, current_time)
+            if complete_count == len(process_list): # just finished the last job
+                continue
+            if len(queue) > 0:
+                cur_task = queue[0]
+                schedule.append((current_time, cur_task[0].id))
+            else:   # waiting for next arrival
+                current_time = next_arrival.arrive_time
+                continue
+
+        time_step = min(cur_task[1], next_arrival.arrive_time-current_time if next_arrival else 9999)
+        cur_task[1] -= time_step
+        current_time += time_step
+
+    avg_waiting_time = 1.0*waiting_time/complete_count
+
+    return schedule, avg_waiting_time
 
 def SJF_scheduling(process_list, alpha):
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
