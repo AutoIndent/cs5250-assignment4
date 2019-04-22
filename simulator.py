@@ -219,6 +219,17 @@ def main(argv):
     SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
     write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
 
+    print "Experiment RR"
+    for i in range(1, 11, 1):
+        _, time = RR_scheduling(process_list, time_quantum=i)
+        print 'time_quantum=%s, average_waiting_time=%s' % (i, time)
+    print "Experiment SJF"
+    for i in range(0, 11, 1):
+        alpha = 1.0*i/10
+        _, time = SJF_schedule, SJF_avg_waiting_time = SJF_scheduling(process_list, alpha = alpha)
+        print "alpha=%s, average_waiting_time=%s" % (alpha, time)
+
+
 if __name__ == '__main__':
     main(sys.argv[1:])
 
